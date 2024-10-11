@@ -1,36 +1,57 @@
 import re
+import argparse
+import os
 
-prog_file = open("files/test_prog.txt", "r", encoding="cp1251")
+parser = argparse.ArgumentParser()
+parser.add_argument("filename")
+args = parser.parse_args()
+prog_filename = str(args.filename)
 
-# Separate the header and remove it to append later
+prog_file = open(prog_filename, "r", encoding="cp1251")
+
+# Separate the header to append later
 prog_header = prog_file.readline()
 
-# Updating the text
+# Setting up regular expressions
+time_pattern = r'(\d{2}:\d{2}) '
+age_restriction_pattern = r' \((\d{1,2})\+\)'
+date_pattern = r'\d{2}/\d{2}/\d{4}'
+
 prog_content = ""
 
-while True:
+for line in prog_file:
     # Removing the quotes
-    line = prog_file.readline().replace('"', '')
+    line = line.replace('"', '')
 
-    # Adding back quotes around each item following proper convention
-    time_pattern = r'(\d{2}:\d{2}) '
-    age_restriction_pattern = r' \((\d{1,2})\+\)'
+    # Check if the line contains date
+    if re.search(date_pattern, line):
+        line = f'\n{line}\n'
 
-    line = re.sub(time_pattern, r'\1 "', line)
-    line = re.sub(age_restriction_pattern, r'" (\1+)', line)
+    # Check if the line is a TV guide item and place quotes accordingly
+    elif re.search(time_pattern, line):
+        line = re.sub(time_pattern, r'\1 "', line)
 
+        # The item contains age restriction
+        if re.search(age_restriction_pattern, line):
+            line = re.sub(age_restriction_pattern, r'" (\1+)', line)
+        else:
+            line = line.strip("\n") + '"\n'
+
+    # The line is empty or contains unnecessary data
+    else:
+        line = ""
 
     # Appending the updated line
     prog_content += line
-    if not line:
-        break
 
 # Combining the updated text for final output
 prog_output = f'{prog_header}{prog_content}'
-print(prog_output)
+print("Successfully written!")
 
 # Writing output into file
-with open("files/output.txt", "w", encoding="cp1251") as output_txt:
+if not os.path.exists('output'):
+    os.mkdir('output')
+with open(f"output/{prog_filename}", "w", encoding="cp1251") as output_txt:
     output_txt.write(prog_output)
 
 prog_file.close()
