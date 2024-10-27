@@ -1,62 +1,65 @@
 import re
-import argparse
 import os
 
-parser = argparse.ArgumentParser()
-parser.add_argument("filename")
-args = parser.parse_args()
-prog_filename = str(args.filename)
+if not os.path.exists('input'):
+    os.mkdir('input')
 
-prog_file = open(prog_filename, "r", encoding="cp1251")
+input_dir = 'input'
+file_list = os.listdir(input_dir)
 
-# Separate the header to append later
-prog_header = prog_file.readline()
+if not file_list:
+    print("Директория 'input' пуста\nПереместите нужные файлы в директорию 'input'")
+else:
+    for file in file_list:
+        with open(f'input/{file}', "r", encoding="cp1251") as prog_file:
+            print(f'Открываю "{file}"...')
 
-# Check is guide is for the ОТР channel and change the header accordingly
-if re.search("ОТР", prog_filename):
-    prog_header = re.sub("Кубань 24", "Кубань 24 ОТР", prog_header)
+            # Separate the header to append later
+            prog_header = prog_file.readline()
 
-# Setting up regular expressions
-time_pattern = r'(\d{2}:\d{2}) '
-age_restriction_pattern = r' \((\d{1,2})\+\)'
-date_pattern = r'\d{2}/\d{2}/\d{4}'
+            # Check is guide is for the ОТР channel and change the header accordingly
+            if re.search("ОТР", file):
+                prog_header = re.sub("Кубань 24", "Кубань 24 ОТР", prog_header)
 
-prog_content = ""
+            # Setting up regular expressions
+            time_pattern = r'(\d{2}:\d{2}) '
+            age_restriction_pattern = r' \((\d{1,2})\+\)'
+            date_pattern = r'\d{2}/\d{2}/\d{4}'
 
-for line in prog_file:
-    # Removing the quotes
-    line = line.replace('"', '')
+            prog_content = ""
 
-    # The line contains date
-    if re.search(date_pattern, line):
-        line = f'\n{line}\n'
+            for line in prog_file:
+                # Removing the quotes
+                line = line.replace('"', '')
 
-    # Placing back quotes
-    # The line is a TV guide item
-    elif re.search(time_pattern, line):
-        line = re.sub(time_pattern, r'\1 "', line)
+                # The line contains date
+                if re.search(date_pattern, line):
+                    line = f'\n{line}\n'
 
-        # The item contains age restriction
-        if re.search(age_restriction_pattern, line):
-            line = re.sub(age_restriction_pattern, r'" (\1+)', line)
-        else:
-            line = line.strip("\n") + '"\n'
+                # Placing back quotes
+                # The line is a TV guide item
+                elif re.search(time_pattern, line):
+                    line = re.sub(time_pattern, r'\1 "', line)
 
-    # The line is empty or contains unnecessary data
-    else:
-        line = ""
+                    # The item contains age restriction
+                    if re.search(age_restriction_pattern, line):
+                        line = re.sub(age_restriction_pattern, r'" (\1+)', line)
+                    else:
+                        line = line.strip("\n") + '"\n'
 
-    # Appending the updated line
-    prog_content += line
+                # The line is empty or contains unnecessary data
+                else:
+                    line = ""
 
-# Combining the updated text for final output
-prog_output = f'{prog_header}{prog_content}'
-print("Successfully written!")
+                # Appending the updated line
+                prog_content += line
 
-# Writing output into file
-if not os.path.exists('output'):
-    os.mkdir('output')
-with open(f"output/{prog_filename}", "w", encoding="cp1251") as output_txt:
-    output_txt.write(prog_output)
+            # Combining the updated text for final output
+            prog_output = f'{prog_header}{prog_content}'
 
-prog_file.close()
+            # Writing output into file
+            if not os.path.exists('output'):
+                os.mkdir('output')
+            with open(f"output/{file}", "w", encoding="cp1251") as output_txt:
+                output_txt.write(prog_output)
+                print(f'» » »\nФайл "{file}" записан в директорию "output"\n')
