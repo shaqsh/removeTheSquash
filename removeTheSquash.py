@@ -12,6 +12,10 @@ prog_file = open(prog_filename, "r", encoding="cp1251")
 # Separate the header to append later
 prog_header = prog_file.readline()
 
+# Check is guide is for the ОТР channel and change the header accordingly
+if re.search("ОТР", prog_filename):
+    prog_header = re.sub("Кубань 24", "Кубань 24 ОТР", prog_header)
+
 # Setting up regular expressions
 time_pattern = r'(\d{2}:\d{2}) '
 age_restriction_pattern = r' \((\d{1,2})\+\)'
@@ -23,11 +27,12 @@ for line in prog_file:
     # Removing the quotes
     line = line.replace('"', '')
 
-    # Check if the line contains date
+    # The line contains date
     if re.search(date_pattern, line):
         line = f'\n{line}\n'
 
-    # Check if the line is a TV guide item and place quotes accordingly
+    # Placing back quotes
+    # The line is a TV guide item
     elif re.search(time_pattern, line):
         line = re.sub(time_pattern, r'\1 "', line)
 
@@ -55,4 +60,3 @@ with open(f"output/{prog_filename}", "w", encoding="cp1251") as output_txt:
     output_txt.write(prog_output)
 
 prog_file.close()
-output_txt.close()
